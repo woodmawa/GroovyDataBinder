@@ -1,18 +1,16 @@
 package com.softwood.databinder.converters
 
-class UrlToFileConverter extends AbstractConverterImpl {
-    UrlToFileConverter () {
-        super (File)
+class StringToFileConverter extends AbstractConverterImpl {
+    StringToFileConverter() {
+        super (String)
     }
 
     @Override
     File convert (value) {
         assert targetClazz == File
-        assert value instanceof URL
-        URI uri = value.toURI()
-        assert uri
+        assert value instanceof String || value instanceof GString
 
-        File file = new File (uri)
+        File file = new File (value)
         file
     }
 
@@ -20,7 +18,7 @@ class UrlToFileConverter extends AbstractConverterImpl {
     boolean canConvert (value) {
         assert targetClazz == File
 
-        if (value.is(URL))
+        if (value instanceof String || value instanceof GString)
             true
         else
             false

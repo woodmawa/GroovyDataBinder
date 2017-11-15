@@ -2,6 +2,8 @@ package com.softwood.databinder.converters
 
 import spock.lang.Specification
 
+import java.nio.file.Paths
+
 class UrlToFileConverterUnitTestSpecification extends Specification{
 
     def setup () {
@@ -10,7 +12,7 @@ class UrlToFileConverterUnitTestSpecification extends Specification{
 
     def "create url to file converter" () {
         setup : "we create a new converter "
-        UrlToFileConverter fc = new UrlToFileConverter(File)
+        UrlToFileConverter fc = new UrlToFileConverter()
 
         expect : "target to be set to File type "
 
@@ -20,7 +22,7 @@ class UrlToFileConverterUnitTestSpecification extends Specification{
 
     def "check getTargetType method returns File "() {
         setup : "we create a new converter "
-        UrlToFileConverter fc = new UrlToFileConverter(File)
+        UrlToFileConverter fc = new UrlToFileConverter()
 
         expect : "targetType to return File "
         fc.getTargetClazz() == File
@@ -28,7 +30,7 @@ class UrlToFileConverterUnitTestSpecification extends Specification{
 
     def "check canConvert method returns true "() {
         setup : "we create a new converter "
-        UrlToFileConverter fc = new UrlToFileConverter(File)
+        UrlToFileConverter fc = new UrlToFileConverter()
 
         def result = fc.canConvert(URL)
 
@@ -38,14 +40,14 @@ class UrlToFileConverterUnitTestSpecification extends Specification{
 
     def "call convert() method returns File instance "() {
         setup : "we create a new converter "
-        UrlToFileConverter fc = new UrlToFileConverter(File)
+        UrlToFileConverter fc = new UrlToFileConverter()
 
-        def result = fc.convert(new URL ("file:/temp"))
+        File result = fc.convert(new URL ("file:/temp"))
 
         expect : "canConvert to return true for Url input "
         result.getClass() == File
 
-        result.canonicalPath == "D:\\temp"
+        result.toString() == Paths.get ("/temp").toString()
 
     }
 }

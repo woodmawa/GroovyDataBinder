@@ -1,8 +1,8 @@
 package com.softwood.databinder.converters
 
 class UriToFileConverter extends AbstractConverterImpl {
-    UriToFileConverter(Class fileClazz) {
-        super (fileClazz)
+    UriToFileConverter() {
+        super (File)
     }
 
     @Override
