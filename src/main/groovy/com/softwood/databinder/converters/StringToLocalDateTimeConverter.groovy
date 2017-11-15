@@ -2,15 +2,15 @@ package com.softwood.databinder.converters
 
 import java.time.LocalDateTime
 
-class DateToLocalDateTimeConverter extends AbstractConverterImpl {
-    DateToLocalDateTimeConverter() {
+class StringToLocalDateTimeConverter extends AbstractConverterImpl {
+    StringToLocalDateTimeConverter() {
         super (LocalDateTime)
     }
 
     @Override
     LocalDateTime convert (value) {
         assert targetClazz == LocalDateTime
-        assert value instanceof Calendar
+        assert value instanceof Date
 
         LocalDateTime.parse (value.toString())
     }
@@ -19,7 +19,7 @@ class DateToLocalDateTimeConverter extends AbstractConverterImpl {
     boolean canConvert (value) {
         assert targetClazz == LocalDateTime
 
-        if (value instanceof Calendar)
+        if (value instanceof Date)
             true
         else
             false
