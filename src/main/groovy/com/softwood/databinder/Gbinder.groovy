@@ -1,5 +1,12 @@
 package com.softwood.databinder
 
+import com.softwood.databinder.converters.CalendarToLocalDateTimeConverter
+import com.softwood.databinder.converters.DateToLocalDateTimeConverter
+import com.softwood.databinder.converters.StringToFileConverter
+import com.softwood.databinder.converters.StringToLocalDateTimeConverter
+import com.softwood.databinder.converters.UriToFileConverter
+import com.softwood.databinder.converters.UrlToFileConverter
+
 /**
  * Copyright (c) 2017 Softwood Consulting Ltd
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +25,7 @@ package com.softwood.databinder
 import groovy.transform.ToString
 import org.codehaus.groovy.runtime.InvokerHelper
 
+import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentLinkedQueue
 
 import static java.lang.reflect.Modifier.isStatic
@@ -29,6 +37,17 @@ import java.lang.reflect.Type
 class Gbinder {
 
     private static ConcurrentLinkedQueue typeConverters = new ConcurrentLinkedQueue()
+
+    //configure standard converters
+    static {
+        typeConverters << [Calendar, LocalDateTime, CalendarToLocalDateTimeConverter]
+        typeConverters << [Date, LocalDateTime, DateToLocalDateTimeConverter]
+        typeConverters << [String, File, StringToFileConverter]
+        typeConverters << [String, LocalDateTime, StringToLocalDateTimeConverter]
+        typeConverters << [URI, File, UriToFileConverter]
+        typeConverters << [URL, File, UrlToFileConverter]
+    }
+
 
     static def registerTypeConverter(sourceType, targetType, converter) {
         assert targetType instanceof Class
