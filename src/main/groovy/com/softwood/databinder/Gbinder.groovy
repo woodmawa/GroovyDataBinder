@@ -37,6 +37,7 @@ import java.lang.reflect.Type
 class Gbinder {
 
     private static ConcurrentLinkedQueue typeConverters = new ConcurrentLinkedQueue()
+    private ConcurrentLinkedQueue localTypeConverters = new ConcurrentLinkedQueue()
 
     //configure standard converters
     static {
@@ -49,20 +50,10 @@ class Gbinder {
     }
 
 
-    static def registerTypeConverter(sourceType, targetType, converter) {
+    static def registerGlobalTypeConverter(sourceType, targetType, converter) {
         assert targetType instanceof Class
         assert sourceType instanceof Class
         typeConverters << [sourceType, targetType, converter]
-    }
-
-    //see if standard converter is in registry listing and return it
-    static def lookupTypeConvertors(sourceType, targetType) {
-        def converters = typeConverters.collect {
-            if (it[0] == sourceType && it[1] == targetType)
-                it[2]
-            else
-                null
-        }
     }
 
     //tests if type is simple type classifier or not
@@ -77,12 +68,50 @@ class Gbinder {
 
     //private constructor
     private Gbinder () {
+        //setup new instance with ref copy of global type converters
+        typeConverters.each {
+            addTypeConverter (*it) }
+    }
+
+    Queue getConverters () {
+        localTypeConverters
+    }
+
+    def addTypeConverter(sourceType, targetType, converter) {
+        ArrayList entry = []
+        entry << sourceType
+        entry << targetType
+        entry << converter
+        localTypeConverters << entry
+    }
+
+    def removeTypeConverter(sourceType, targetType, converter) {
+        if (lookupTypeConverters(sourceType, targetType)) {
+            ArrayList entry = [sourceType, targetType, converter]
+            def res = localTypeConverters.remove(entry)
+            true
+        } else
+            false
+    }
+
+    //see if standard converter is in registry listing and return it
+    def lookupTypeConverters(sourceType, targetType) {
+        def converters =[]
+        localTypeConverters.each {
+            def entry = it
+            if (it[0] == sourceType && it[1] == targetType)
+                converters << it[2]
+        }
+        if (converters.size() == 1)
+            converters[0]
+        else if (converters ==[])
+            null
+        else
+            converters
 
     }
 
-    Queue getConvertors () {
-        typeConverters
-    }
+
 
     /**
      *

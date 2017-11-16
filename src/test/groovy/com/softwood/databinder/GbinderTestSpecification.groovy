@@ -4,13 +4,18 @@ import spock.lang.Specification
 
 class GbinderTestSpecification extends Specification {
 
-    def "basic type checker " () {
-        setup:
+    def "add local convertor and ensure its add to local regsitry  " () {
+        when:
         Gbinder binder = Gbinder.newInstance ()
-        Queue conv =  binder.getConvertors()
-        println "convertors : $conv"
+        Queue conv =  binder.getConverters()
+        def startNum = conv.size()
+        binder.addTypeConverter(Object,Object, {})
+        def revised = binder.getConverters().size()
+        def c = binder.lookupTypeConverters(Object, Object)
+        binder.removeTypeConverter(Object,Object, c)
 
-        expect:
-        conv.size () > 0
+        then:
+        revised == startNum + 1
+        binder.getConverters().size() == startNum
     }
 }
