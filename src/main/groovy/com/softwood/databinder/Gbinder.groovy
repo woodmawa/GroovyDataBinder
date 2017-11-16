@@ -6,6 +6,7 @@ import com.softwood.databinder.converters.StringToFileConverter
 import com.softwood.databinder.converters.StringToLocalDateTimeConverter
 import com.softwood.databinder.converters.UriToFileConverter
 import com.softwood.databinder.converters.UrlToFileConverter
+import groovy.beans.Bindable
 
 /**
  * Copyright (c) 2017 Softwood Consulting Ltd
@@ -25,6 +26,9 @@ import com.softwood.databinder.converters.UrlToFileConverter
 import groovy.transform.ToString
 import org.codehaus.groovy.runtime.InvokerHelper
 
+import java.beans.PropertyChangeEvent
+import java.beans.PropertyChangeListener
+import java.beans.PropertyChangeSupport
 import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -38,6 +42,14 @@ class Gbinder {
 
     private static ConcurrentLinkedQueue typeConverters = new ConcurrentLinkedQueue()
     private ConcurrentLinkedQueue localTypeConverters = new ConcurrentLinkedQueue()
+
+    //Listen to changes when new global typeConverter added
+    private static PropertyChangeSupport $propertyChangeSupport =
+            new PropertyChangeSupport(Gbinder.class)
+
+    static void addPropertyChangeListener(PropertyChangeListener listener) {
+        $propertyChangeSupport.addPropertyChangeListener(listener)
+    }
 
     //configure standard converters
     static {
@@ -53,7 +65,10 @@ class Gbinder {
     static def registerGlobalTypeConverter(sourceType, targetType, converter) {
         assert targetType instanceof Class
         assert sourceType instanceof Class
+        def oldVal = new ConcurrentLinkedQueue<>(typeConverters)
         typeConverters << [sourceType, targetType, converter]
+
+        $propertyChangeSupport.firePropertyChange("typeConverters", oldVal, typeConverters )
     }
 
     //tests if type is simple type classifier or not
@@ -69,6 +84,19 @@ class Gbinder {
     //private constructor
     private Gbinder () {
         //setup new instance with ref copy of global type converters
+        //if new class level converter is added - ensure its added to local registry
+        def pcListener = {pce ->
+            def newRecord
+            if (pce.propertyName == "typeConverters"){
+                if (pce.newValue.size() > pce.oldValue.size() )
+                    newRecord = pce.newValue - pce.oldValue
+            }
+            //add new global converter entry to local registry
+            addTypeConverter(*newRecord)
+        }
+        addPropertyChangeListener(pcListener)
+
+        //build local type converter registry as copy of global master
         typeConverters.each {
             addTypeConverter (*it) }
     }
@@ -94,7 +122,7 @@ class Gbinder {
             false
     }
 
-    //see if standard converter is in registry listing and return it
+    //see if standard converter is in registry listing, return as List in case there are more than 1, and return it
     def lookupTypeConverters(sourceType, targetType) {
         def converters =[]
         localTypeConverters.each {
@@ -102,15 +130,22 @@ class Gbinder {
             if (it[0] == sourceType && it[1] == targetType)
                 converters << it[2]
         }
-        if (converters.size() == 1)
-            converters[0]
-        else if (converters ==[])
-            null
-        else
-            converters
-
+        converters
     }
 
+    //if more than one type converter just return the first match - expected norm
+    def lookupFirstTypeConverter(sourceType, targetType) {
+        def converters =[]
+        localTypeConverters.each {
+            def entry = it
+            if (it[0] == sourceType && it[1] == targetType)
+                converters << it[2]
+        }
+        if (converters)
+            converters[0]
+        else
+            null
+    }
 
 
     /**
@@ -178,7 +213,7 @@ class Gbinder {
 
                 def ans = this.processMapAttributes(targetInstance, sourcePropsList)
                 break
-            case Class:
+            default:
                 println "source was a class instance  "
                 sourcePropsList = source.metaClass.properties.findAll { it.name != "class" }
 
@@ -196,9 +231,7 @@ class Gbinder {
                     sourcePropsList = reduced
                 }
 
-                processSourceInstanceAttributes (targetInstance, sourcePropsList)
-                break
-            default :
+                processSourceInstanceAttributes (targetInstance, source, sourcePropsList)
                 break
         }
 
@@ -361,7 +394,7 @@ class Gbinder {
      * @param result
      * @return
      */
-    private def processSourceInstanceAttributes (targetInstance, sourcePropsList) {
+    private def processSourceInstanceAttributes (targetInstance, sourceInstance, sourcePropsList) {
         sourcePropsList?.each { MetaProperty prop ->
             def converters
             MetaProperty targetProperty
@@ -380,6 +413,7 @@ class Gbinder {
 
             if (targetProperty) {
                 def sourcePropClassType = prop.type
+                def value = prop.
                 println "sourceClassType ${sourcePropClassType.canonicalName}"
                 assert sourcePropClassType instanceof Class
                 println " tag ${prop.name}, with targetPropclass : ${targetProperty.type}, and sourcePropClass : $sourcePropClassType"
@@ -387,28 +421,28 @@ class Gbinder {
                 if (targetProperty.type.isAssignableFrom(sourcePropClassType)) {
                     //get value of the source property using closure param metaMethod 'prop as ${prop.getProperty(source)}"
                     //and set this on the target instance
-                    println "target prop is assignable from source, set prop value : ${prop.getProperty(source)}"
-                    targetProperty.setProperty(targetInstance, prop.getProperty(source))
+                    println "target prop is assignable from source, set prop value : ${prop.getProperty(sourceInstance)}"
+                    targetProperty.setProperty(targetInstance, prop.getProperty(sourceInstance))
                 } else if (targetProperty.type == String) {
                     println "casting source to target string type"
-                    targetProperty.setProperty(targetInstance, prop.getProperty(source).toString())
+                    targetProperty.setProperty(targetInstance, prop.getProperty(sourceInstance).toString())
                 } else if (isPrimitive) {
                     println "parse to primitive "
                     switch (targetProperty.type) {
                         case int:
-                            targetProperty.setProperty(targetInstance, Integer.parseInt(prop.getProperty(source).toString()))
+                            targetProperty.setProperty(targetInstance, Integer.parseInt(prop.getProperty(sourceInstance).toString()))
                             break
                         case char:
-                            targetProperty.setProperty(targetInstance, prop.getProperty(source) as char)
+                            targetProperty.setProperty(targetInstance, prop.getProperty(sourceInstance) as char)
                             break
                         case float:
-                            targetProperty.setProperty(targetInstance, Float.parseFloat(prop.getProperty(source).toString()))
+                            targetProperty.setProperty(targetInstance, Float.parseFloat(prop.getProperty(sourceInstance).toString()))
                             break
                         case double:
-                            targetProperty.setProperty(targetInstance, Double.parseDouble(prop.getProperty(source).toString()))
+                            targetProperty.setProperty(targetInstance, Double.parseDouble(prop.getProperty(sourceInstance).toString()))
                             break
                         case boolean:
-                            targetProperty.setProperty(targetInstance, Boolean.parseBoolean(prop.getProperty(source).toString()))
+                            targetProperty.setProperty(targetInstance, Boolean.parseBoolean(prop.getProperty(sourceInstance).toString()))
                             break
                         default:
                             break
@@ -417,16 +451,17 @@ class Gbinder {
 
                 } else {
                     //check if any registered custom type convertors
-                    converters = typeConverters.collect {
+                    converters = lookupTypeConverters(sourcePropClassType, targetProperty.type)
+                    /*localTypeConverters.collect {
                         if (it[0] == sourcePropClassType && it[1] == targetProperty.type)
                             it[2] as ValueConverter
                         else
                             null
-                    }
+                    }*/
                     if (converters) {
-                        def sourceValue = prop.getProperty(source)
+                        def sourceValue = prop.getProperty(sourceInstance)
                         if (sourceValue) {
-                            def newValue = converters[0].convert(sourceValue)
+                            def newValue = converters[0].asType(ValueConverter).convert(sourceValue)
                             targetProperty.setProperty(targetInstance, newValue)
                         }
                     }
