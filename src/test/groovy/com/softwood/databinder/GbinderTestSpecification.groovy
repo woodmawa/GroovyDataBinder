@@ -119,6 +119,7 @@ class GbinderTestSpecification extends Specification {
         def t = new Target()
         Gbinder binder = Gbinder.newInstance ()
         binder.addTypeConverter(SpecialType,List, {[it.name, it.sal]} )
+        println "user.dir >>> "+ System.getProperty("user.dir")
 
         when:
 

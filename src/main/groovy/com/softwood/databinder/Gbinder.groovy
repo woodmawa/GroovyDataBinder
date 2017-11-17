@@ -53,12 +53,25 @@ class Gbinder {
 
     //configure standard converters
     static {
-        typeConverters << [Calendar, LocalDateTime, CalendarToLocalDateTimeConverter]
+        // class class loader will include resources so file will be found
+        def configFile =  "config/BinderConfig.groovy"
+        def resource = new File (configFile).canonicalPath
+        resource = Gbinder.getClassLoader().getResource(configFile)
+        def binderConfig = new ConfigSlurper().parse (resource)
+
+        binderConfig.global.converters.each {
+        typeConverters << it
+        }
+
+        typeConverters
+
+        /*typeConverters << [Calendar, LocalDateTime, CalendarToLocalDateTimeConverter]
         typeConverters << [Date, LocalDateTime, DateToLocalDateTimeConverter]
         typeConverters << [String, File, StringToFileConverter]
         typeConverters << [String, LocalDateTime, StringToLocalDateTimeConverter]
         typeConverters << [URI, File, UriToFileConverter]
-        typeConverters << [URL, File, UrlToFileConverter]
+        typeConverters << [URL, File, UrlToFileConverter]*/
+
     }
 
 

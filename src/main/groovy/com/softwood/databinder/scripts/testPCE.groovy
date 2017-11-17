@@ -10,3 +10,4 @@ Gbinder.registerGlobalTypeConverter(Object,Object,{})
 
 def pcs = binder.$propertyChangeSupport
 
+println "direct run of script user.dir " + System.getProperty("user.dir")

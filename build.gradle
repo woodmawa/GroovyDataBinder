@@ -4,6 +4,9 @@ version '1.0-SNAPSHOT'
 apply plugin: 'groovy'
 apply plugin: 'java'
 
+//setup proj.dir as project root
+System.setProperty( "proj.dir", project.projectDir.toString() )
+
 sourceCompatibility = 1.8
 
 repositories {
@@ -27,4 +30,16 @@ dependencies {
     // https://mvnrepository.com/artifact/org.spockframework/spock-core
     testCompile group: 'org.spockframework', name: 'spock-core', version: '1.1-groovy-2.4'
 
+}
+
+task (env) {
+    doLast {
+        println  "Root project:   "+ project.rootProject
+        println  "  rootDir:      "+ project.rootDir
+        println  "  projectDir:   "+ project.projectDir
+
+        println  "  env project dir:  "+ System.getProperty("user.dir")
+
+        println  "  proj.dir:  "+ System.getProperty("proj.dir")
+    }
 }
