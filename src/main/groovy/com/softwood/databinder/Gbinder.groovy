@@ -6,6 +6,7 @@ import com.softwood.databinder.converters.StringToFileConverter
 import com.softwood.databinder.converters.StringToLocalDateTimeConverter
 import com.softwood.databinder.converters.UriToFileConverter
 import com.softwood.databinder.converters.UrlToFileConverter
+import com.softwood.utilities.BinderHelper
 import groovy.beans.Bindable
 
 /**
@@ -24,11 +25,13 @@ import groovy.beans.Bindable
  */
 
 import groovy.transform.ToString
+import groovy.util.logging.Slf4j
 import org.codehaus.groovy.runtime.InvokerHelper
 
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
+import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -38,6 +41,7 @@ import java.lang.reflect.Field
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 
+@Slf4j
 class Gbinder {
 
     private static ConcurrentLinkedQueue typeConverters = new ConcurrentLinkedQueue()
@@ -51,26 +55,32 @@ class Gbinder {
         $propertyChangeSupport.addPropertyChangeListener(listener)
     }
 
+    //utility : read the Binder configuration from resources in the classpath
+    static def processBinderConfiguration () {
+        // class class loader will include 'resources' on classpath so file will be found
+        def configFile =  "config/BinderConfig.groovy"
+        def resource = Gbinder.getClassLoader().getResource(configFile)
+        def binderConfig = new ConfigSlurper().parse (resource)
+        binderConfig
+    }
+
+    private boolean trimStrings
+    private String dateFormat = ""
+
     //configure standard converters
     static {
-        // class class loader will include resources so file will be found
-        def configFile =  "config/BinderConfig.groovy"
-        def resource = new File (configFile).canonicalPath
-        resource = Gbinder.getClassLoader().getResource(configFile)
-        def binderConfig = new ConfigSlurper().parse (resource)
+
+        if (!System.getProperty("PID")) {
+            System.setProperty("PID", (BinderHelper.PID).toString())
+        }
+
+        def binderConfig = processBinderConfiguration()
 
         binderConfig.global.converters.each {
             typeConverters << it
         }
 
         typeConverters
-        /*typeConverters << [Calendar, LocalDateTime, CalendarToLocalDateTimeConverter]
-        typeConverters << [Date, LocalDateTime, DateToLocalDateTimeConverter]
-        typeConverters << [String, File, StringToFileConverter]
-        typeConverters << [String, LocalDateTime, StringToLocalDateTimeConverter]
-        typeConverters << [URI, File, UriToFileConverter]
-        typeConverters << [URL, File, UrlToFileConverter]*/
-
     }
 
 
@@ -90,12 +100,24 @@ class Gbinder {
     }
 
     static Gbinder newBinder() {
-        new Gbinder ()
+        def binder = new Gbinder ()
+
+        // class class loader will include 'resources' on classpath so file will be found
+        def binderConfig = processBinderConfiguration()
+
+        binder.trimStrings = binderConfig.global.trimStrings
+        binder.dateFormat = binderConfig.global.dateFormat
+
+        log.debug "PID [$BinderHelper.PID], newBinder() : trim : $binder.trimStrings, dateFormat : $binder.dateFormat"
+
+        binder
+
     }
 
     //private constructor
     private Gbinder () {
-        //setup new instance with ref copy of global type converters
+
+            //setup new instance with ref copy of global type converters
         //if new class level converter is added - ensure its added to local registry
         def pcListener = {pce ->
             def newRecord
@@ -204,8 +226,6 @@ class Gbinder {
         switch (source) {
             case Map :
             case Expando:
-                println "source was a map "
-
                 //binding source from list of attributes held in a map, sourceProps is ArrayList of [prop string names, value, type]
                 sourcePropsList = source.collect { [it.key, it.value, it.value.getClass()] }
 
@@ -226,7 +246,6 @@ class Gbinder {
                 def ans = this.processMapAttributes(targetInstance, sourcePropsList)
                 break
             default:
-                println "source was a class instance  "
                 sourcePropsList = source.metaClass.properties.findAll { it.name != "class" }
 
                 //if exclusion list remove from source before we process
@@ -264,11 +283,11 @@ class Gbinder {
         MetaProperty targetProperty
 
         //for each array entry of [property, value, type], try and bind it in targetInstance
-        paramsList?.each { ArrayList prop ->
+        paramsList?.each { ArrayList sprop ->
 
             def converters
             //check if property exists in the target.
-            targetProperty = targetInstance.hasProperty(prop[0])
+            targetProperty = targetInstance.hasProperty(sprop[0])
 
             //if target doesn't have source match skip to next source property
             if (targetProperty == null)
@@ -280,33 +299,40 @@ class Gbinder {
                 isPrimitive = false
 
             if (targetProperty) {
-                if (targetProperty.type.isAssignableFrom(prop[2])) {
+                if (targetProperty.type == String) {
+                    log.debug "target prop :'${targetProperty.name}',  casting source to target, set prop value : ${sprop[1]} "
+                    def sourceProp
+                    //if source is date or localDateTime then format the instance to default formatted string
+                    if (sprop[2] instanceof Date || sprop[2] instanceof LocalDateTime ) {
+                        SimpleDateFormat df = new SimpleDateFormat(dateFormat)
+                        sourceProp = df.format (sprop[1])
+                    } else {
+                        sourceProp = trimStrings ? sprop[1].toString().trim() : sprop[1].toString()
+                    }
+                    targetProperty.setProperty(targetInstance, sourceProp)
+                } else if (targetProperty.type.isAssignableFrom(sprop[2])) {
                     //get value of the source property using closure param metaMethod 'prop as ${prop.getProperty(source)}"
                     //and set this on the target instance
-                    println "target prop :'${targetProperty.name}' is assignable from source, set prop value : ${prop[1]}"
-                    def value = prop[1]
+                    log.debug "target prop :'${targetProperty.name}' is assignable from source, set prop value : ${sprop[1]}"
+                    def value = sprop[1]
                     targetProperty.setProperty(targetInstance, value)
-                    //targetInstance."${prop[0]}" = value
-                } else if (targetProperty.type == String) {
-                    println "target prop :'${targetProperty.name}',  casting source to target, set prop value : ${prop[1]} "
-                    targetProperty.setProperty(targetInstance, prop[1].toString())
                 } else if (isPrimitive) {
-                    println "parse to primitive "
+                    log.debug "parse sprop[1].toString() to primitive "
                     switch (targetProperty.type) {
                         case int:
-                            targetProperty.setProperty(targetInstance, Integer.parseInt(prop[1].toString()))
+                            targetProperty.setProperty(targetInstance, Integer.parseInt(sprop[1].toString()))
                             break
                         case char:
-                            targetProperty.setProperty(targetInstance, prop[1] as char)
+                            targetProperty.setProperty(targetInstance, sprop[1] as char)
                             break
                         case float:
-                            targetProperty.setProperty(targetInstance, Float.parseFloat(prop[1].toString()))
+                            targetProperty.setProperty(targetInstance, Float.parseFloat(sprop[1].toString()))
                             break
                         case double:
-                            targetProperty.setProperty(targetInstance, Double.parseDouble(prop[1].toString()))
+                            targetProperty.setProperty(targetInstance, Double.parseDouble(sprop[1].toString()))
                             break
                         case boolean:
-                            targetProperty.setProperty(targetInstance, Boolean.parseBoolean(prop[1].toString()))
+                            targetProperty.setProperty(targetInstance, Boolean.parseBoolean(sprop[1].toString()))
                             break
                         default:
                             break
@@ -315,13 +341,13 @@ class Gbinder {
 
                 } else {
                     converters = typeConverters.collect {
-                        if (it[0] == prop[2] && it[1] == targetProperty.type)
+                        if (it[0] == sprop[2] && it[1] == targetProperty.type)
                             it[2] as ValueConverter
                         else
                             null
                     }
                     if (converters) {
-                        def sourceValue = prop[1]
+                        def sourceValue = sprop[1]
                         if (sourceValue) {
                             def newValue = converters[0].convert(sourceValue)
                             targetProperty.setProperty(targetInstance, newValue)
@@ -385,7 +411,6 @@ class Gbinder {
                 bindLeafMapAttributes(subTarget, propValue)
             }
         }
-        println propList
 
         //if remaining compound attributes, then recurse
         if (subParamsBlock) {
@@ -407,13 +432,13 @@ class Gbinder {
      * @return
      */
     private def processSourceInstanceAttributes (targetInstance, sourceInstance, sourcePropsList) {
-        sourcePropsList?.each { MetaProperty prop ->
+        sourcePropsList?.each { MetaProperty sprop ->
             def converters
             MetaProperty targetProperty
             boolean isPrimitive
 
             //if property exists in the target.
-            targetProperty = targetInstance.hasProperty("${prop.name}")
+            targetProperty = targetInstance.hasProperty("${sprop.name}")
 
             if (targetProperty == null)
                 return //return from closure
@@ -424,37 +449,44 @@ class Gbinder {
                 isPrimitive = false
 
             if (targetProperty) {
-                def sourcePropClassType = prop.type
-                def value = prop.
-                println "sourceClassType ${sourcePropClassType.canonicalName}"
+                def sourcePropClassType = sprop.type
+                def value = sprop.getProperty(sourceInstance)
+                log.debug "sourceClassType ${sourcePropClassType.canonicalName}"
                 assert sourcePropClassType instanceof Class
-                println " tag ${prop.name}, with targetPropclass : ${targetProperty.type}, and sourcePropClass : $sourcePropClassType"
+                log.debug " source property ${sprop.name}, with targetPropclass : ${targetProperty.type}, and sourcePropClass : $sourcePropClassType"
 
-                if (targetProperty.type.isAssignableFrom(sourcePropClassType)) {
+                if (targetProperty.type == String) {
+                    log.debug "casting source to target string type"
+                    def sourceProp
+                    if (sprop.type instanceof Date || sprop.type instanceof LocalDateTime ) {
+                        SimpleDateFormat df = new SimpleDateFormat(dateFormat)
+                        sourceProp = df.format (sprop.getProperty(sourceInstance))
+                    } else {
+                        sourceProp = trimStrings ? sprop.getProperty(sourceInstance).toString().trim() : sprop.getProperty(sourceInstance).toString()
+                    }
+                    targetProperty.setProperty(targetInstance, sourceProp )
+                } else if (targetProperty.type.isAssignableFrom(sourcePropClassType)) {
                     //get value of the source property using closure param metaMethod 'prop as ${prop.getProperty(source)}"
                     //and set this on the target instance
-                    println "target prop is assignable from source, set prop value : ${prop.getProperty(sourceInstance)}"
-                    targetProperty.setProperty(targetInstance, prop.getProperty(sourceInstance))
-                } else if (targetProperty.type == String) {
-                    println "casting source to target string type"
-                    targetProperty.setProperty(targetInstance, prop.getProperty(sourceInstance).toString())
+                    log.debug "target prop is assignable from source, set prop value : ${sprop.getProperty(sourceInstance)}"
+                    targetProperty.setProperty(targetInstance, sprop.getProperty(sourceInstance))
                 } else if (isPrimitive) {
-                    println "parse to primitive "
+                    log.debug "parse ${sprop.getProperty(sourceInstance).toString()} to primitive "
                     switch (targetProperty.type) {
                         case int:
-                            targetProperty.setProperty(targetInstance, Integer.parseInt(prop.getProperty(sourceInstance).toString()))
+                            targetProperty.setProperty(targetInstance, Integer.parseInt(sprop.getProperty(sourceInstance).toString()))
                             break
                         case char:
-                            targetProperty.setProperty(targetInstance, prop.getProperty(sourceInstance) as char)
+                            targetProperty.setProperty(targetInstance, sprop.getProperty(sourceInstance) as char)
                             break
                         case float:
-                            targetProperty.setProperty(targetInstance, Float.parseFloat(prop.getProperty(sourceInstance).toString()))
+                            targetProperty.setProperty(targetInstance, Float.parseFloat(sprop.getProperty(sourceInstance).toString()))
                             break
                         case double:
-                            targetProperty.setProperty(targetInstance, Double.parseDouble(prop.getProperty(sourceInstance).toString()))
+                            targetProperty.setProperty(targetInstance, Double.parseDouble(sprop.getProperty(sourceInstance).toString()))
                             break
                         case boolean:
-                            targetProperty.setProperty(targetInstance, Boolean.parseBoolean(prop.getProperty(sourceInstance).toString()))
+                            targetProperty.setProperty(targetInstance, Boolean.parseBoolean(sprop.getProperty(sourceInstance).toString()))
                             break
                         default:
                             break
@@ -464,14 +496,8 @@ class Gbinder {
                 } else {
                     //check if any registered custom type convertors
                     converters = lookupTypeConverters(sourcePropClassType, targetProperty.type)
-                    /*localTypeConverters.collect {
-                        if (it[0] == sourcePropClassType && it[1] == targetProperty.type)
-                            it[2] as ValueConverter
-                        else
-                            null
-                    }*/
                     if (converters) {
-                        def sourceValue = prop.getProperty(sourceInstance)
+                        def sourceValue = sprop.getProperty(sourceInstance)
                         if (sourceValue) {
                             def newValue = converters[0].asType(ValueConverter).convert(sourceValue)
                             targetProperty.setProperty(targetInstance, newValue)

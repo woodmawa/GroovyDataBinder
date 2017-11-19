@@ -5,6 +5,10 @@
 //spring specific
 //import org.springframework.boot.ApplicationPid
 
+
+import com.softwood.logging.logback.ColourConverter
+import com.softwood.logging.logback.WhitespaceThrowableProxyConverter
+
 import java.nio.charset.Charset
 
 import static ch.qos.logback.classic.Level.*
@@ -18,11 +22,16 @@ scan('5 minutes')  // Scan for changes every 5 minutes.
 setupAppenders()
 setupLoggers()
 
+
 def displayStatusOnConsole() {
     statusListener OnConsoleStatusListener
 }
 
 def setupAppenders() {
+
+    //inform logback of existence of custom colour converter
+    conversionRule("clr", ColourConverter)
+    conversionRule("wex", WhitespaceThrowableProxyConverter)
 
     def consolePatternFormat = "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr([%property{PID} - %thread]){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(>){faint} %m%n%wex"
     //def filePatternFormat = "%d{yyyy-MM-dd HH:mm:ss.SSS} [%property{PID} - %thread] %-5level %-12logger{12}:[.%M] > %msg%n%wex"
@@ -72,7 +81,7 @@ def setupAppenders() {
 
 def setupLoggers() {
     //logger 'com.mrhaki.java.Simple', getLogLevel(), ['logfile']
-    logger 'org.softwood.base.GzmqTrait', DEBUG
+    logger 'com.softwood.databinder.Gbinder', DEBUG
     root WARN, ['STDOUT']
 }
 
@@ -84,3 +93,4 @@ def isDevelopmentEnv() {
     def env =  System.properties['app.env'] ?: 'DEV'
     env == 'DEV'
 }
+

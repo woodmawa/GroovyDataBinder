@@ -37,6 +37,7 @@ class Target {
     Date bday
     List spec
     Building building
+    String dateAsString
 
 }
 
@@ -135,5 +136,32 @@ class GbinderTestSpecification extends Specification {
         res1.address == [county:'uk',town:'ipswich']
         res1.col == ["abc",1,true]
         res1.spec == ["woodman", 53.7]
+    }
+
+    def "bind nested map source into target " () {
+        setup:
+        def paramsMap  = new HashMap  (tOrF: true, address:[county:'uk',town:'ipswich'] )
+        Gbinder binder = Gbinder.newBinder ()
+
+        when:
+        Target res = binder.bind (Target, paramsMap)
+
+        then :
+        res.tOrF == "true"
+        res.address.county == 'uk'
+
+    }
+
+    def "bind date value in source to string in target " () {
+        setup:
+        def paramsMap  = new HashMap  (dateAsString : new Date())
+        Gbinder binder = Gbinder.newBinder ()
+
+        when:
+        Target res = binder.bind (Target, paramsMap)
+        println "in test: date as string : "+ res.dateAsString
+
+        then :
+        res.dateAsString.contains ("GMT")
     }
 }
