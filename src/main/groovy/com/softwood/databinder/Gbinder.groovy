@@ -108,7 +108,7 @@ class Gbinder {
         binder.trimStrings = binderConfig.binder.global.trimStrings
         binder.dateFormat = binderConfig.binder.global.dateFormat
 
-        log.debug "PID [$BinderHelper.PID], newBinder() : trim : $binder.trimStrings, dateFormat : $binder.dateFormat"
+        log.debug "newBinder(): trim : $binder.trimStrings, dateFormat : $binder.dateFormat"
 
         binder
 
@@ -300,7 +300,7 @@ class Gbinder {
 
             if (targetProperty) {
                 if (targetProperty.type == String) {
-                    log.debug "target prop :'${targetProperty.name}',  casting source to target, set prop value : ${sprop[1]} "
+                    log.debug "bindLeafMapAttributes: target prop :'${targetProperty.name}',  casting source to target, set prop value : ${sprop[1]} "
                     def sourceProp
                     //if source is date or localDateTime then format the instance to default formatted string
                     if (sprop[2] instanceof Date || sprop[2] instanceof LocalDateTime ) {
@@ -313,11 +313,11 @@ class Gbinder {
                 } else if (targetProperty.type.isAssignableFrom(sprop[2])) {
                     //get value of the source property using closure param metaMethod 'prop as ${prop.getProperty(source)}"
                     //and set this on the target instance
-                    log.debug "target prop :'${targetProperty.name}' is assignable from source, set prop value : ${sprop[1]}"
+                    log.debug "bindLeafMapAttributes: target prop :'${targetProperty.name}' is assignable from source, set prop value : ${sprop[1]}"
                     def value = sprop[1]
                     targetProperty.setProperty(targetInstance, value)
                 } else if (isPrimitive) {
-                    log.debug "parse sprop[1].toString() to primitive "
+                    log.debug "bindLeafMapAttributes: parse sprop[1].toString() to primitive "
                     switch (targetProperty.type) {
                         case int:
                             targetProperty.setProperty(targetInstance, Integer.parseInt(sprop[1].toString()))
@@ -451,12 +451,12 @@ class Gbinder {
             if (targetProperty) {
                 def sourcePropClassType = sprop.type
                 def value = sprop.getProperty(sourceInstance)
-                log.debug "sourceClassType ${sourcePropClassType.canonicalName}"
+                log.debug "processSourceInstanceAttributes: sourceClassType ${sourcePropClassType.canonicalName}"
                 assert sourcePropClassType instanceof Class
-                log.debug " source property ${sprop.name}, with targetPropclass : ${targetProperty.type}, and sourcePropClass : $sourcePropClassType"
+                log.debug "processSourceInstanceAttributes: source property ${sprop.name}, with targetPropclass : ${targetProperty.type}, and sourcePropClass : $sourcePropClassType"
 
                 if (targetProperty.type == String) {
-                    log.debug "casting source to target string type"
+                    log.debug "processSourceInstanceAttributes: casting source to target string type"
                     def sourceProp
                     if (sprop.type instanceof Date || sprop.type instanceof LocalDateTime ) {
                         SimpleDateFormat df = new SimpleDateFormat(dateFormat)
@@ -468,10 +468,10 @@ class Gbinder {
                 } else if (targetProperty.type.isAssignableFrom(sourcePropClassType)) {
                     //get value of the source property using closure param metaMethod 'prop as ${prop.getProperty(source)}"
                     //and set this on the target instance
-                    log.debug "target prop is assignable from source, set prop value : ${sprop.getProperty(sourceInstance)}"
+                    log.debug "processSourceInstanceAttributes: target prop is assignable from source, set prop value : ${sprop.getProperty(sourceInstance)}"
                     targetProperty.setProperty(targetInstance, sprop.getProperty(sourceInstance))
                 } else if (isPrimitive) {
-                    log.debug "parse ${sprop.getProperty(sourceInstance).toString()} to primitive "
+                    log.debug "processSourceInstanceAttributes: parse ${sprop.getProperty(sourceInstance).toString()} to primitive "
                     switch (targetProperty.type) {
                         case int:
                             targetProperty.setProperty(targetInstance, Integer.parseInt(sprop.getProperty(sourceInstance).toString()))
