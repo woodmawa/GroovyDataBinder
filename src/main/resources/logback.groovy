@@ -2,9 +2,6 @@
  * Created by willw on 08/06/2017.
  */
 
-//spring specific
-//import org.springframework.boot.ApplicationPid
-
 
 import com.softwood.logging.logback.AnsiConsoleAppender
 import com.softwood.logging.logback.ColourConverter
@@ -36,6 +33,15 @@ def setupAppenders() {
     conversionRule("wex", WhitespaceThrowableProxyConverter)
 
     def consolePatternFormat = "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr([proc:%property{PID} - thread:%thread]){magenta} %clr(---){faint} %clr(%logger{39}){cyan} %clr(>){faint} %m%n%wex"
+
+    appender('STDOUT', com.softwood.logging.logback.AnsiConsoleAppender) {
+        //withJansi = true
+        encoder(PatternLayoutEncoder) {
+            charset = Charset.forName('UTF-8')
+            pattern = consolePatternFormat
+        }
+    }
+
     //def filePatternFormat = "%d{yyyy-MM-dd HH:mm:ss.SSS} [%property{PID} - %thread] %-5level %-12logger{12}:[.%M] > %msg%n%wex"
     /*  PID defined if springboot app
     if (!System.getProperty("PID")) {
@@ -65,20 +71,7 @@ def setupAppenders() {
     //    }
     //}
 
-    // spring specific : Add custom converter for %smiley pattern.
-    //conversionRule 'smiley', SmileyConverter
 
-    //conversionRule 'clr', org.springframework.boot.logging.logback.ColorConverter
-    //conversionRule 'wex', org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter
-
-
-    appender('STDOUT', com.softwood.logging.logback.AnsiConsoleAppender) {
-        //withJansi = true
-        encoder(PatternLayoutEncoder) {
-            charset = Charset.forName('UTF-8')
-            pattern = consolePatternFormat
-        }
-    }
 }
 
 def setupLoggers() {

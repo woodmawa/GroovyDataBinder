@@ -1,14 +1,5 @@
 package com.softwood.databinder
 
-import com.softwood.databinder.converters.CalendarToLocalDateTimeConverter
-import com.softwood.databinder.converters.DateToLocalDateTimeConverter
-import com.softwood.databinder.converters.StringToFileConverter
-import com.softwood.databinder.converters.StringToLocalDateTimeConverter
-import com.softwood.databinder.converters.UriToFileConverter
-import com.softwood.databinder.converters.UrlToFileConverter
-import com.softwood.utilities.BinderHelper
-import groovy.beans.Bindable
-
 /**
  * Copyright (c) 2017 Softwood Consulting Ltd
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +14,15 @@ import groovy.beans.Bindable
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import com.softwood.databinder.converters.CalendarToLocalDateTimeConverter
+import com.softwood.databinder.converters.DateToLocalDateTimeConverter
+import com.softwood.databinder.converters.StringToFileConverter
+import com.softwood.databinder.converters.StringToLocalDateTimeConverter
+import com.softwood.databinder.converters.UriToFileConverter
+import com.softwood.databinder.converters.UrlToFileConverter
+import com.softwood.utilities.BinderHelper
+import groovy.beans.Bindable
 
 import groovy.transform.ToString
 import groovy.util.logging.Slf4j
@@ -105,8 +105,8 @@ class Gbinder {
         // class class loader will include 'resources' on classpath so file will be found
         def binderConfig = processBinderConfiguration()
 
-        binder.trimStrings = binderConfig.global.trimStrings
-        binder.dateFormat = binderConfig.global.dateFormat
+        binder.trimStrings = binderConfig.binder.global.trimStrings
+        binder.dateFormat = binderConfig.binder.global.dateFormat
 
         log.debug "PID [$BinderHelper.PID], newBinder() : trim : $binder.trimStrings, dateFormat : $binder.dateFormat"
 
@@ -117,7 +117,7 @@ class Gbinder {
     //private constructor
     private Gbinder () {
 
-            //setup new instance with ref copy of global type converters
+        //setup new instance with ref copy of global type converters
         //if new class level converter is added - ensure its added to local registry
         def pcListener = {pce ->
             def newRecord
