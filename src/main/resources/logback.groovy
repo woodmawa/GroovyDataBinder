@@ -35,7 +35,7 @@ def setupAppenders() {
     conversionRule("clr", ColourConverter)
     conversionRule("wex", WhitespaceThrowableProxyConverter)
 
-    def consolePatternFormat = "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr([%property{PID} - %thread]){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(>){faint} %m%n%wex"
+    def consolePatternFormat = "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr([proc:%property{PID} - thread:%thread]){magenta} %clr(---){faint} %clr(%logger{39}){cyan} %clr(>){faint} %m%n%wex"
     //def filePatternFormat = "%d{yyyy-MM-dd HH:mm:ss.SSS} [%property{PID} - %thread] %-5level %-12logger{12}:[.%M] > %msg%n%wex"
     /*  PID defined if springboot app
     if (!System.getProperty("PID")) {
