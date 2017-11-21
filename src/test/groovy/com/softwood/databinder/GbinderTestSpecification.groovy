@@ -1,5 +1,6 @@
 package com.softwood.databinder
 
+import com.softwood.utilities.BinderHelper
 import groovy.json.JsonSlurper
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString

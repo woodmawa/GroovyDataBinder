@@ -24,6 +24,7 @@ dependencies {
     compile 'ch.qos.logback:logback-classic:1.2.3'
     compile 'ch.qos.logback:logback-core:1.2.3'
     compile 'org.slf4j:slf4j-api:1.7.25'
+    compile 'org.fusesource.jansi:jansi:1.16' //interpret colour codes for logback console appender
 
 
     testCompile group: 'junit', name: 'junit', version: '4.12'

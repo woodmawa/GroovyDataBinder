@@ -6,8 +6,10 @@
 //import org.springframework.boot.ApplicationPid
 
 
+import com.softwood.logging.logback.AnsiConsoleAppender
 import com.softwood.logging.logback.ColourConverter
 import com.softwood.logging.logback.WhitespaceThrowableProxyConverter
+import com.softwood.utilities.BinderHelper
 
 import java.nio.charset.Charset
 
@@ -70,11 +72,11 @@ def setupAppenders() {
     //conversionRule 'wex', org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter
 
 
-    appender('STDOUT', ConsoleAppender) {
+    appender('STDOUT', com.softwood.logging.logback.AnsiConsoleAppender) {
+        //withJansi = true
         encoder(PatternLayoutEncoder) {
             charset = Charset.forName('UTF-8')
             pattern = consolePatternFormat
-            //pattern =
         }
     }
 }
