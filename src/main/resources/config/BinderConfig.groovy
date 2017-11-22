@@ -23,7 +23,7 @@ import java.time.LocalDateTime
 
 //global type converters
 binder {
-    global {
+    classDefault {
         converters  =  [
                 [Calendar, LocalDateTime, CalendarToLocalDateTimeConverter],
                 [Date, LocalDateTime, DateToLocalDateTimeConverter],

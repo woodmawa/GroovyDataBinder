@@ -58,8 +58,8 @@ class Gbinder {
     //utility : read the Binder configuration from resources in the classpath
     static def processBinderConfiguration () {
         // class class loader will include 'resources' on classpath so file will be found
-        def configFile =  "config/BinderConfig.groovy"
-        def resource = Gbinder.getClassLoader().getResource(configFile)
+        def configFileName =  "config/BinderConfig.groovy"
+        def resource = Gbinder.getClassLoader().getResource(configFileName)
         def binderConfig = new ConfigSlurper().parse (resource)
         binderConfig
     }
@@ -105,10 +105,10 @@ class Gbinder {
         // class class loader will include 'resources' on classpath so file will be found
         def binderConfig = processBinderConfiguration()
 
-        binder.trimStrings = binderConfig.binder.global.trimStrings
-        binder.dateFormat = binderConfig.binder.global.dateFormat
+        binder.trimStrings = binderConfig.binder.classDefault.trimStrings
+        binder.dateFormat = binderConfig.binder.classDefault.dateFormat
 
-        log.debug "newBinder(): trim : $binder.trimStrings, dateFormat : $binder.dateFormat"
+        log.debug "newBinder(): default settings> trim : $binder.trimStrings, dateFormat : $binder.dateFormat"
 
         binder
 
