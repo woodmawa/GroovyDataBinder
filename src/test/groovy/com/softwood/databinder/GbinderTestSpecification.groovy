@@ -54,6 +54,7 @@ class Address {
     String number
     String street
     String town
+    Address secondaryAddress
 }
 
 
@@ -119,7 +120,7 @@ class GbinderTestSpecification extends Specification {
         setup:
         def s = new Source (name:"will", number:"10", tOrF: true, address:[county:'uk',town:'ipswich'], col:["abc",1,true], spec:new SpecialType(name:"woodman", sal: 53.7))
         def t = new Target()
-        Gbinder binder = Gbinder.newInstance ()
+        Gbinder binder = Gbinder.newBinder ()
         binder.addTypeConverter(SpecialType,List, {[it.name, it.sal]} )
         println "user.dir >>> "+ System.getProperty("user.dir")
 
@@ -164,5 +165,61 @@ class GbinderTestSpecification extends Specification {
 
         then :
         res.dateAsString.contains ("GMT")
+    }
+
+    def "bind with prefix matcher and include list " () {
+        setup:
+        def paramsMap  = [tOrF: true, address:[county:'uk',town:'ipswich'] ]
+        Gbinder binder = Gbinder.newBinder ()
+
+        when:
+        Target res = binder.bind (Target, paramsMap, [include: ["town", "county"]], "address")
+        println "bound result : " + res
+
+        then :
+        res.address.town == "ipswich"
+        res.address.county == "uk"
+
+    }
+
+    def "bind with positive include list " () {
+        setup:
+        def paramsMap  = [tOrF: true, address:[county:'uk',town:'ipswich'] ]
+        Gbinder binder = Gbinder.newBinder ()
+
+        when:
+        Target res = binder.bind (Target, paramsMap, [include: ["tOrF"]])
+        println "bound result : " + res
+
+        then :
+        res.tOrF == "true"
+
+        when:
+        res = binder.bind (Target, paramsMap, [include: ["address"]])
+        println "bound result : " + res
+
+        then :
+        res.address.town == "ipswich"
+    }
+
+    def "bind Map, then Expando with param map  " () {
+        setup:
+        def paramsMap  = [tOrF: true, address:[county:'uk',town:'ipswich'] ]
+        Gbinder binder = Gbinder.newBinder ()
+
+        when:
+        Map res = binder.bind (Map, paramsMap /*, [include: ["tOrF"]]*/)
+        println "bound result : " + res
+
+        then :
+        res.tOrF
+
+        when:
+        Expando eres = binder.bind (Expando, paramsMap /*, [include: ["tOrF"]]*/)
+        println "bound result : " + eres
+
+        then :
+        eres.tOrF
+
     }
 }
