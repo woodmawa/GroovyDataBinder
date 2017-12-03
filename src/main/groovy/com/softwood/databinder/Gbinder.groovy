@@ -103,6 +103,11 @@ class Gbinder {
         simpleTypes.contains(type)
     }
 
+    @Override
+    static Gbinder newInstance() {
+        newBinder()
+    }
+
     static Gbinder newBinder() {
         def binder = new Gbinder ()
 
@@ -163,8 +168,12 @@ class Gbinder {
     //see if standard converter is in registry listing, return as List in case there are more than 1, and return it
     def lookupTypeConverters(sourceType, targetType) {
         def converters =[]
-        localTypeConverters.each {
+        /*localTypeConverters.each {
             def entry = it
+            if (it[0] == sourceType && it[1] == targetType)
+                converters << it[2]
+        }*/
+        localTypeConverters.findAll {
             if (it[0] == sourceType && it[1] == targetType)
                 converters << it[2]
         }
@@ -174,11 +183,7 @@ class Gbinder {
     //if more than one type converter just return the first match - expected norm
     def lookupFirstTypeConverter(sourceType, targetType) {
         def converters =[]
-        localTypeConverters.each {
-            def entry = it
-            if (it[0] == sourceType && it[1] == targetType)
-                converters << it[2]
-        }
+        converters = lookupTypeConverters (sourceType, targetType)
         if (converters)
             converters[0]
         else
@@ -237,10 +242,10 @@ class Gbinder {
             MetaProperty meta = prefixMatched
             switch (meta?.type) {
                 case Map :
+                case Collection:
                     newInst = [:]
                     subTargetPropsList = []
                     break
-                case Collection:
                 case List :
                     newInst = []
                     subTargetPropsList = []
