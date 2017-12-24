@@ -164,6 +164,13 @@ class Gbinder {
         localTypeConverters << entry
     }
 
+    /**
+     * removes matching entry if any from the local type converters
+     * @param sourceType
+     * @param targetType
+     * @param converter
+     * @return
+     */
     def removeTypeConverter(sourceType, targetType, converter) {
         if (lookupTypeConverters(sourceType, targetType)) {
             ArrayList entry = [sourceType, targetType, converter]
@@ -173,7 +180,11 @@ class Gbinder {
             false
     }
 
-    //see if standard converter is in registry listing, return as List in case there are more than 1, and return it
+    /**
+     *  see if standard converter is in registry listing, return as List in case there are more than 1, and return it
+     * @param sourceType
+     * @param targetType
+     */
     def lookupTypeConverters(sourceType, targetType) {
         def converters =[]
         /*localTypeConverters.each {
@@ -188,7 +199,11 @@ class Gbinder {
         converters
     }
 
-    //if more than one type converter just return the first match - expected norm
+    /**
+     *  if more than one type converter just return the first match - expected default norm
+     * @param sourceType
+     * @param targetType
+     */
     def lookupFirstTypeConverter(sourceType, targetType) {
         def converters =[]
         converters = lookupTypeConverters (sourceType, targetType)
