@@ -148,6 +148,14 @@ class Gbinder {
         localTypeConverters
     }
 
+    /**
+     * add converter to this instance of Gbinders local converters
+     *
+     * @param sourceType - type of source
+     * @param targetType - type being converted to
+     * @param converter - function that converts from source to target and returns target.  Can also be a closure
+     * @return
+     */
     def addTypeConverter(sourceType, targetType, converter) {
         ArrayList entry = []
         entry << sourceType
