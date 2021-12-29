@@ -4,62 +4,13 @@ import com.softwood.utilities.BinderHelper
 import groovy.json.JsonSlurper
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
+import org.junit.jupiter.api.Test
 import spock.lang.Specification
-
-@ToString
-class SpecialType {
-    String name
-    BigDecimal sal
-}
-
-@ToString()
-class Source {
-    String name
-    String number
-    boolean tOrF
-    //static myStat = 1
-    double dub
-    Map address
-    List col
-    SpecialType spec
-    Building building
-}
-
-@ToString
-@EqualsAndHashCode
-class Target {
-    List myList
-    String name
-    int  number
-    String bar
-    String tOrF
-    Map address
-    Collection col
-    Date bday
-    List spec
-    Building building
-    String dateAsString
-
-}
-
-@ToString
-class Building {
-    String Name
-    BigDecimal height
-    Address address
-}
-
-@ToString
-class Address {
-    String number
-    String street
-    String town
-    Address secondaryAddress
-}
 
 
 class GbinderTestSpecification extends Specification {
 
+    @Test
     def "add local convertor and ensure its add to local regsitry  " () {
         when:
         Gbinder binder = Gbinder.newInstance ()
@@ -75,6 +26,7 @@ class GbinderTestSpecification extends Specification {
         binder.getConverters().size() == startNum
     }
 
+    @Test
     def "add global convertor and ensure it gets added to local registry, then remove   " () {
         when:
         Gbinder binder = Gbinder.newInstance ()
@@ -102,6 +54,7 @@ class GbinderTestSpecification extends Specification {
 
     }
 
+    @Test
     def "bind with slurped json input "() {
         setup :
         def slurper = new JsonSlurper()
@@ -116,6 +69,7 @@ class GbinderTestSpecification extends Specification {
 
     }
 
+    @Test
     def "bind from source class inst to inst of target, than as class type and compare  " () {
         setup:
         def s = new Source (name:"will", number:"10", tOrF: true, address:[county:'uk',town:'ipswich'], col:["abc",1,true], spec:new SpecialType(name:"woodman", sal: 53.7))
@@ -140,6 +94,7 @@ class GbinderTestSpecification extends Specification {
         res1.spec == ["woodman", 53.7]
     }
 
+    @Test
     def "bind nested map source into target " () {
         setup:
         def paramsMap  = new HashMap  (tOrF: true, address:[county:'uk',town:'ipswich'] )
@@ -154,6 +109,7 @@ class GbinderTestSpecification extends Specification {
 
     }
 
+    @Test
     def "bind date value in source to string in target " () {
         setup:
         def paramsMap  = new HashMap  (dateAsString : new Date())
@@ -167,6 +123,7 @@ class GbinderTestSpecification extends Specification {
         res.dateAsString.contains ("GMT")
     }
 
+    @Test
     def "bind with prefix matcher and include list " () {
         setup:
         def paramsMap  = [tOrF: true, address:[county:'uk',town:'ipswich'] ]
@@ -182,6 +139,7 @@ class GbinderTestSpecification extends Specification {
 
     }
 
+    @Test
     def "bind with positive include list " () {
         setup:
         def paramsMap  = [tOrF: true, address:[county:'uk',town:'ipswich'] ]
@@ -202,6 +160,7 @@ class GbinderTestSpecification extends Specification {
         res.address.town == "ipswich"
     }
 
+    @Test
     def "bind Map, then Expando with param map  " () {
         setup:
         def paramsMap  = [tOrF: true, address:[county:'uk',town:'ipswich'] ]

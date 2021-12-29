@@ -128,13 +128,13 @@ class Gbinder {
         //setup new instance with ref copy of global type converters
         //if new class level converter is added - ensure its added to local registry
         def pcListener = {pce ->
-            def newRecord
+            ConcurrentLinkedQueue newRecord
             if (pce.propertyName == "typeConverters"){
                 if (pce.newValue.size() > pce.oldValue.size() )
                     newRecord = pce.newValue - pce.oldValue
             }
             //add new global converter entry to local registry
-            addTypeConverter(*newRecord)
+            addTypeConverter(*(newRecord.asList()))
         }
         addPropertyChangeListener(pcListener)
 
@@ -512,17 +512,15 @@ class Gbinder {
                         }
 
                     } else {
-                        converters = localTypeConverters.collect {
-                            if (it[0] == sprop.type && it[1] == targetProperty.type)
-                                it[2] as ValueConverter
-                            else
-                                null
+                        converters = localTypeConverters.findAll {
+                            it[0] == sprop.type && it[1] == targetProperty.type
                         }
                         if (converters) {
                             def sourceValue = getSourcePropertyValue (source, sprop)
 
                             if (sourceValue) {
-                                def newValue = converters[0].convert(sourceValue)
+                                def converterEntryList = converters[0]
+                                def newValue = converterEntryList[2].convert(sourceValue)
                                 targetProperty.setProperty(targetInstance, newValue)
                             }
                         }

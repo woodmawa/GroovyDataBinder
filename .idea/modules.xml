@@ -5,8 +5,6 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/GroovyDataBinder.iml" filepath="$PROJECT_DIR$/.idea/modules/GroovyDataBinder.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/GroovyDataBinder.main.iml" filepath="$PROJECT_DIR$/.idea/modules/GroovyDataBinder.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/GroovyDataBinder.test.iml" filepath="$PROJECT_DIR$/.idea/modules/GroovyDataBinder.test.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/GroovyDataBinder_main.iml" filepath="$PROJECT_DIR$/.idea/modules/GroovyDataBinder_main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/GroovyDataBinder_test.iml" filepath="$PROJECT_DIR$/.idea/modules/GroovyDataBinder_test.iml" />
     </modules>
   </component>
 </project>

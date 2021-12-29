@@ -27,10 +27,15 @@ dependencies {
     implementation 'org.fusesource.jansi:jansi:2.4.0' //interpret colour codes for logback console appender
 
 
-    testImplementation group: 'junit', name: 'junit', version: '4.12'
+    //testImplementation group: 'junit', name: 'junit', version: '4.12'
+    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.8.2'
     // https://mvnrepository.com/artifact/org.spockframework/spock-core
     testImplementation group: 'org.spockframework', name: 'spock-core', version: '2.0-groovy-3.0'
 
+}
+
+test {
+    useJUnitPlatform()
 }
 
 task (env) {
