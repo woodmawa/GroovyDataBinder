@@ -103,7 +103,6 @@ class Gbinder {
         simpleTypes.contains(type)
     }
 
-    @Override
     static Gbinder newInstance() {
         newBinder()
     }
