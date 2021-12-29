@@ -520,7 +520,7 @@ class Gbinder {
 
                             if (sourceValue) {
                                 def converterEntryList = converters[0]
-                                def newValue = converterEntryList[2].convert(sourceValue)
+                                def newValue = converterEntryList[2].call(sourceValue)
                                 targetProperty.setProperty(targetInstance, newValue)
                             }
                         }
